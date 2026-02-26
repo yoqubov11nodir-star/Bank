@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>UzBank | Ro'yxatdan o'tish</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); min-height: 100vh; display: flex; align-items: center; font-family: 'Poppins', sans-serif; color: white; }
+        .reg-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.1); padding: 40px; width: 100%; max-width: 550px; box-shadow: 0 25px 45px rgba(0,0,0,0.4); }
+        .form-control { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white !important; border-radius: 12px; padding: 12px; margin-bottom: 5px; }
+        .form-control:focus { background: rgba(255, 255, 255, 0.15); border-color: #00d2ff; box-shadow: 0 0 10px rgba(0, 210, 255, 0.3); }
+        label { font-size: 0.85rem; color: #00d2ff; font-weight: 500; }
+        .btn-register { background: linear-gradient(45deg, #00d2ff, #3a7bd5); border: none; border-radius: 12px; padding: 14px; font-weight: 600; text-transform: uppercase; margin-top: 20px; transition: 0.3s; }
+        .btn-register:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0, 210, 255, 0.4); }
+    </style>
+</head>
+<body>
+<div class="container d-flex justify-content-center">
+    <div class="reg-card">
+        <div class="text-center mb-4">
+            <i class="fas fa-university fa-3x text-info mb-3"></i>
+            <h2 class="fw-bold">UzBank Mobile</h2>
+            <p class="text-white-50 small">Yangi hisob ochish</p>
+        </div>
+        <form method="POST" id="regForm">
+            {% csrf_token %}
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label>Foydalanuvchi nomi</label>
+                    <input type="text" name="username" class="form-control" placeholder="User123" required>
+                </div>
+                <div class="col-md-6">
+                    <label>Email</label>
+                    <input type="email" name="email" class="form-control" placeholder="test@mail.uz" required>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label>Karta raqami (16 xonali)</label>
+                <input type="text" name="card_number" class="form-control" placeholder="8600 ...." maxlength="16" required>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label>Parol (Kirish uchun)</label>
+                    <input type="password" name="password" id="p1" class="form-control" placeholder="••••••••" required>
+                </div>
+                <div class="col-md-6">
+                    <label>Parolni tasdiqlash</label>
+                    <input type="password" name="password_confirm" id="p2" class="form-control" placeholder="••••••••" required>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label>Karta PIN kodi (4 xonali)</label>
+                <input type="password" name="pin" class="form-control text-center" style="letter-spacing: 8px;" maxlength="4" placeholder="••••" required>
+            </div>
+            <button type="submit" class="btn btn-register btn-primary w-100">Kodni olish <i class="fas fa-arrow-right ms-2"></i></button>
+        </form>
+        <div class="text-center mt-3"><a href="{% url 'login' %}" class="text-info text-decoration-none small">Akkauntingiz bormi? Kirish</a></div>
+        {% if messages %}{% for msg in messages %}<div class="alert alert-danger mt-3 py-2 small bg-opacity-25">{{ msg }}</div>{% endfor %}{% endif %}
+    </div>
+</div>
+<script>
+    document.getElementById('regForm').addEventListener('submit', function(e) {
+        if (document.getElementById('p1').value !== document.getElementById('p2').value) {
+            e.preventDefault();
+            alert("Parollar bir-biriga mos kelmadi!");
+        }
+    });
+</script>
+</body>
+</html>

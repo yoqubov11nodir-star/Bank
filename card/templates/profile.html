@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>UzBank | Mening Profilim</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); min-height: 100vh; color: white; font-family: 'Poppins', sans-serif; }
+        .profile-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1); padding: 30px; margin-top: 50px; }
+        .avatar-circle { width: 100px; height: 100px; background: linear-gradient(45deg, #00d2ff, #3a7bd5); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 20px; }
+        .form-control { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white !important; border-radius: 12px; }
+        .form-control:focus { background: rgba(255, 255, 255, 0.15); border-color: #00d2ff; box-shadow: none; }
+        .btn-update { background: #00d2ff; border: none; color: #0f0c29; font-weight: bold; border-radius: 12px; padding: 12px; transition: 0.3s; }
+        .btn-update:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 210, 255, 0.4); }
+        .nav-link { color: rgba(255,255,255,0.7); transition: 0.3s; }
+        .nav-link:hover { color: #00d2ff; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-transparent border-bottom border-secondary">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}"><i class="fas fa-university me-2"></i>UzBank</a>
+        <div class="navbar-nav ms-auto">
+            <a class="nav-link me-3" href="{% url 'dashboard' %}"><i class="fas fa-home me-1"></i> Asosiy</a>
+            <a class="nav-link text-danger" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Chiqish</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="profile-card">
+                <div class="avatar-circle">
+                    <i class="fas fa-user"></i>
+                </div>
+                <h3 class="text-center mb-4">{{ user.username }}</h3>
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="small text-info">Foydalanuvchi nomi</label>
+                        <input type="text" name="username" class="form-control" value="{{ user.username }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small text-info">Email manzili</label>
+                        <input type="email" name="email" class="form-control" value="{{ user.email }}" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="small text-info">Bog'langan Karta</label>
+                        <input type="text" class="form-control bg-dark opacity-50" value="{{ card.card_number }}" disabled>
+                        <small class="text-white-50">Karta raqamini o'zgartirib bo'lmaydi</small>
+                    </div>
+                    <button type="submit" class="btn btn-update w-100">Ma'lumotlarni saqlash</button>
+                </form>
+
+                {% if messages %}
+                    {% for msg in messages %}
+                        <div class="alert alert-info mt-3 py-2 small bg-dark text-info border-info">{{ msg }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
