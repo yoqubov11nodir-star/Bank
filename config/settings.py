@@ -118,15 +118,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# Email sozlamalari
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'yoqubov11nodir@gmail.com'
-# Bu yerga oddiy parolingizni emas, "App Password" (Ilova paroli) qo'yiladi
 EMAIL_HOST_PASSWORD = 'oyekmxxthhxbqqti' 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
-# Muhim: Agar hali ham xato bersa, SSL/TLS bog'lanishini tekshirish uchun:
-# EMAIL_USE_SSL = False  # TLS ishlatilganda SSL False bo'lishi kerak

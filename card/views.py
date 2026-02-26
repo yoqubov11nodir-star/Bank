@@ -78,27 +78,22 @@ def dashboard(request):
             target_number = request.POST.get('target')
             amount = float(request.POST.get('amount', 0))
             
-            # 1. O'ziga o'zi o'tkazishni tekshirish (Siz aytgan muammo)
             if target_number == my_card.card_number:
                 messages.error(request, "O'zingizning kartangizga pul o'tkaza olmaysiz!")
             
             else:
                 to_card = Card.objects.filter(card_number=target_number).first()
                 
-                # 2. Qabul qiluvchi karta mavjudligini tekshirish
                 if not to_card:
                     messages.error(request, "Bunday karta raqami tizimda topilmadi!")
                 
-                # 3. Balans yetarli ekanligini tekshirish
                 elif my_card.balance < amount:
                     messages.error(request, "Hisobingizda mablag' yetarli emas!")
                 
-                # 4. Summa noldan katta bo'lishi kerak
                 elif amount <= 0:
                     messages.error(request, "O'tkazma summasi noto'g'ri!")
                 
                 else:
-                    # Hammasi yaxshi bo'lsa, pulni o'tkazamiz
                     my_card.balance -= amount
                     to_card.balance += amount
                     my_card.save()
@@ -119,7 +114,6 @@ def profile_view(request):
         new_username = request.POST.get('username')
         new_email = request.POST.get('email')
         
-        # Username band emasligini tekshirish
         if User.objects.filter(username=new_username).exclude(id=user.id).exists():
             messages.error(request, "Bu foydalanuvchi nomi band!")
         else:
