@@ -3,8 +3,10 @@ from django.shortcuts import render, redirect
 from django.core.mail import send_mail
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate
-from .models import Card
+from django.contrib.auth import authenticate, login as auth_login, logout
+from .models import Card, Transaction
+from django.db.models import Sum
+from decimal import Decimal
 
 def login_view(request):
     if request.method == "POST":
@@ -15,12 +17,19 @@ def login_view(request):
         if card:
             user = authenticate(username=card.user.username, password=password)
             if user:
+                auth_login(request, user)
                 request.session['card_id'] = card.id
-                return redirect('dashboard')
+                
+                if user.is_staff:
+                    return redirect('admin_dashboard')
+                else:
+                    # MANA SHU YERDA: 'dashboard' emas, 'user_dashboard' bo'lishi shart
+                    return redirect('user_dashboard')
         
         messages.error(request, "Karta raqami yoki parol xato!")
     return render(request, 'login.html')
 
+# RO'YXATDAN O'TISH
 def register_view(request):
     if request.method == "POST":
         username = request.POST.get('username')
@@ -41,12 +50,13 @@ def register_view(request):
         }
 
         try:
-            send_mail('UzBank Kod', f'Kodingiz: {otp_code}', None, [email])
+            send_mail('UzBank Kod', f'Kodingiz: {otp_code}', 'noreply@uzbank.uz', [email])
             return redirect('verify_email')
         except:
             messages.error(request, "Email yuborishda xato!")
     return render(request, 'register.html')
 
+# EMAIL TASDIQLASH
 def verify_email(request):
     data = request.session.get('temp_reg_data')
     if not data: return redirect('register')
@@ -55,7 +65,10 @@ def verify_email(request):
             user = User.objects.create_user(username=data['username'], email=data['email'], password=data['password'])
             Card.objects.create(user=user, card_number=data['card_number'], pin_code=data['pin'], balance=0)
             del request.session['temp_reg_data']
+            messages.success(request, "Ro'yxatdan o'tdingiz. Endi login qiling.")
             return redirect('login')
+        else:
+            messages.error(request, "Kod noto'g'ri!")
     return render(request, 'verify_email.html')
 
 def dashboard(request):
@@ -68,64 +81,109 @@ def dashboard(request):
     if request.method == "POST":
         action = request.POST.get('action')
         
+        # HISOBNI TO'LDIRISH
         if action == "deposit":
-            amount = float(request.POST.get('amount', 0))
-            my_card.balance += amount
-            my_card.save()
-            messages.success(request, f"{amount} UZS muvaffaqiyatli qo'shildi!")
+            amount = request.POST.get('amount')
+            if amount:
+                # float(amount) EMAS, Decimal(amount) ishlatamiz
+                my_card.balance += Decimal(amount) 
+                my_card.save()
+                messages.success(request, f"{amount} UZS qo'shildi!")
+            return redirect('user_dashboard')
             
+        # PUL O'TKAZISH
         elif action == "transfer":
-            target_number = request.POST.get('target')
-            amount = float(request.POST.get('amount', 0))
+            target = request.POST.get('target')
+            amount_str = request.POST.get('amount')
             
-            if target_number == my_card.card_number:
-                messages.error(request, "O'zingizning kartangizga pul o'tkaza olmaysiz!")
-            
-            else:
-                to_card = Card.objects.filter(card_number=target_number).first()
+            if target and amount_str:
+                amount = Decimal(amount_str) # Bu yerda ham Decimal
+                to_card = Card.objects.filter(card_number=target).first()
                 
                 if not to_card:
-                    messages.error(request, "Bunday karta raqami tizimda topilmadi!")
-                
+                    messages.error(request, "Karta topilmadi!")
                 elif my_card.balance < amount:
-                    messages.error(request, "Hisobingizda mablag' yetarli emas!")
-                
-                elif amount <= 0:
-                    messages.error(request, "O'tkazma summasi noto'g'ri!")
-                
+                    messages.error(request, "Mablag' yetarli emas!")
                 else:
-                    my_card.balance -= amount
-                    to_card.balance += amount
+                    my_card.balance -= amount # Decimal - Decimal endi ishlaydi
+                    to_card.balance += amount # Decimal + Decimal endi ishlaydi
                     my_card.save()
                     to_card.save()
-                    messages.success(request, f"{target_number} kartasiga {amount} UZS yuborildi!")
+                    messages.success(request, "O'tkazma bajarildi!")
+            return redirect('user_dashboard')
                     
-    return render(request, 'dashboard.html', {'card': my_card})
+    return render(request, 'user_dashboard.html', {'card': my_card})
 
+
+# PROFIL
 def profile_view(request):
     card_id = request.session.get('card_id')
-    if not card_id:
-        return redirect('login')
+    if not card_id: return redirect('login')
     
     my_card = Card.objects.get(id=card_id)
     user = my_card.user
 
     if request.method == "POST":
-        new_username = request.POST.get('username')
-        new_email = request.POST.get('email')
-        
-        if User.objects.filter(username=new_username).exclude(id=user.id).exists():
-            messages.error(request, "Bu foydalanuvchi nomi band!")
-        else:
-            user.username = new_username
-            user.email = new_email
-            user.save()
-            messages.success(request, "Ma'lumotlar muvaffaqiyatli yangilandi!")
-            return redirect('profile')
+        user.username = request.POST.get('username')
+        user.email = request.POST.get('email')
+        user.save()
+        messages.success(request, "Yangilandi!")
+        return redirect('profile')
 
     return render(request, 'profile.html', {'card': my_card, 'user': user})
 
-
+# LOGOUT
 def logout_view(request):
+    logout(request)
     request.session.flush() 
     return redirect('login')
+
+# ====== ADMIN SEKSIYASI ==========
+
+def admin_login(request):
+    if request.method == "POST":
+        name = request.POST.get('name')
+        password = request.POST.get('password')
+        user = authenticate(username=name, password=password)
+        if user is not None and user.is_staff:
+            auth_login(request, user)
+            return redirect('admin_dashboard')
+        messages.error(request, "Admin xatosi!")
+    return render(request, 'admin_login.html')
+
+def admin_dashboard(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('admin_login')
+
+    if request.method == "POST":
+        action = request.POST.get('action')
+
+        if action == "create_user":
+            username = request.POST.get('username')
+            if not User.objects.filter(username=username).exists():
+                u = User.objects.create_user(username=username, password=request.POST.get('password'))
+                Card.objects.create(user=u, card_number=request.POST.get('card_number'), balance=0)
+                messages.success(request, "Mijoz qo'shildi!")
+            else:
+                messages.error(request, "User band!")
+
+        elif action == "update_balance":
+            card = Card.objects.get(id=request.POST.get('card_id'))
+            card.balance = float(request.POST.get('balance', 0))
+            card.save()
+            messages.success(request, "Balans o'zgardi!")
+
+        elif action == "delete_user":
+            User.objects.filter(id=request.POST.get('user_id')).delete()
+            messages.warning(request, "O'chirildi.")
+
+        return redirect('admin_dashboard')
+
+    context = {
+        'cards': Card.objects.all(),
+        'user_count': User.objects.count(),
+        'total_money': Card.objects.aggregate(Sum('balance'))['balance__sum'] or 0,
+        'transactions': Transaction.objects.all().order_by('-date')
+    }
+    # BU YERDA: Fayl nomi o'zgartirildi
+    return render(request, 'admin_dashboard.html', context)

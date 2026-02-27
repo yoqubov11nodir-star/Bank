@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UzBank Admin | Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --sidebar-bg: #111827; --main-bg: #0f172a; --accent: #06b6d4; --card-bg: #1e293b; }
+        body { background: var(--main-bg); color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        .sidebar { width: 260px; background: var(--sidebar-bg); height: 100vh; position: fixed; padding: 25px; border-right: 1px solid rgba(255,255,255,0.05); }
+        .main-content { margin-left: 260px; padding: 40px; }
+        
+        .stat-card { background: var(--card-bg); padding: 25px; border-radius: 15px; border-left: 5px solid var(--accent); position: relative; transition: 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); }
+
+        .custom-table { background: var(--card-bg); border-radius: 15px; overflow: hidden; margin-top: 20px; border: 1px solid rgba(255,255,255,0.05); }
+        .table { color: #cbd5e1; margin-bottom: 0; }
+        .table thead { background: rgba(0,0,0,0.2); }
+        .table td, .table th { padding: 15px; border-color: rgba(255,255,255,0.05); }
+
+        /* Modal xatoliklarini tuzatish (Oqarib qolmasligi uchun) */
+        .modal-content { background: #1e293b; color: white; border: 1px solid var(--accent); }
+        .modal-header { border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .modal-footer { border-top: 1px solid rgba(255,255,255,0.1); }
+        .form-control { background: #0f172a !important; border: 1px solid #334155 !important; color: white !important; padding: 12px; }
+        .form-control:focus { box-shadow: 0 0 0 2px var(--accent); }
+
+        .btn-action { width: 35px; height: 35px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; border: none; transition: 0.2s; }
+        .btn-edit { background: rgba(234, 179, 8, 0.1); color: #eab308; }
+        .btn-delete { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        .badge-type { background: var(--accent); color: #000; font-weight: 600; font-size: 11px; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="mb-5 px-2">
+        <h3 class="text-info fw-bold"><i class="fas fa-university me-2"></i>UzBank</h3>
+        <small class="text-secondary">Admin Panel v2.0</small>
+    </div>
+    <div class="nav flex-column gap-3">
+        <a href="#" class="nav-link text-white bg-primary rounded px-3 py-2"><i class="fas fa-th-large me-2"></i> Dashboard</a>
+        <a href="{% url 'logout' %}" class="nav-link text-danger mt-5 px-3 py-2"><i class="fas fa-sign-out-alt me-2"></i> Chiqish</a>
+    </div>
+</div>
+
+<div class="main-content">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show bg-dark text-white border-0 shadow">
+                {{ message }}
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <h2 class="fw-bold">Boshqaruv Paneli</h2>
+        <button class="btn btn-info px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#createModal">
+            <i class="fas fa-plus-circle me-2"></i> Yangi Mijoz
+        </button>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="text-secondary small fw-bold">JAMI MIJOZLAR</div>
+                <h2 class="mt-2 fw-bold">{{ user_count }} <span class="fs-6 fw-normal">ta</span></h2>
+                <i class="fas fa-users position-absolute end-0 bottom-0 m-3 opacity-25 fs-1"></i>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card" style="border-left-color: #22c55e;">
+                <div class="text-secondary small fw-bold">BANKDAGI JAMI PUL</div>
+                <h2 class="mt-2 fw-bold text-success">{{ total_money }} <small class="fs-6">UZS</small></h2>
+                <i class="fas fa-wallet position-absolute end-0 bottom-0 m-3 opacity-25 fs-1"></i>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card" style="border-left-color: #eab308;">
+                <div class="text-secondary small fw-bold">JAMI TRANZAKSIYALAR</div>
+                <h2 class="mt-2 fw-bold">{{ transactions.count }} <span class="fs-6 fw-normal">ta</span></h2>
+                <i class="fas fa-history position-absolute end-0 bottom-0 m-3 opacity-25 fs-1"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="custom-table shadow-lg">
+        <div class="p-4 border-bottom border-secondary d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold"><i class="fas fa-list me-2"></i> Mijozlar Ro'yxati</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Foydalanuvchi</th>
+                        <th>Karta Raqami</th>
+                        <th>Balans</th>
+                        <th class="text-center">Amallar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for card in cards %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                                    {{ card.user.username|slice:":1"|upper }}
+                                </div>
+                                <span class="fw-bold">{{ card.user.username }}</span>
+                            </div>
+                        </td>
+                        <td><code>{{ card.card_number }}</code></td>
+                        <td class="text-success fw-bold">{{ card.balance }} UZS</td>
+                        <td class="text-center">
+                            <button class="btn-action btn-edit me-2" data-bs-toggle="modal" data-bs-target="#editModal{{ card.id }}">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                            <form method="POST" style="display: inline;" onsubmit="return confirm('Haqiqatan ham o`chirmoqchimisiz?')">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete_user">
+                                <input type="hidden" name="user_id" value="{{ card.user.id }}">
+                                <button type="submit" class="btn-action btn-delete"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+
+                    <div class="modal fade" id="editModal{{ card.id }}" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content shadow">
+                                <div class="modal-header">
+                                    <h5 class="modal-title text-info">Balansni tahrirlash: {{ card.user.username }}</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form method="POST">
+                                    {% csrf_token %}
+                                    <div class="modal-body p-4">
+                                        <input type="hidden" name="action" value="update_balance">
+                                        <input type="hidden" name="card_id" value="{{ card.id }}">
+                                        <label class="text-secondary mb-2 small">Yangi balans miqdori (UZS):</label>
+                                        <input type="number" name="balance" class="form-control form-control-lg" value="{{ card.balance }}" required>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+                                        <button type="submit" class="btn btn-info px-4">Saqlash</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="custom-table mt-5 shadow-lg">
+        <div class="p-4 border-bottom border-secondary bg-dark bg-opacity-25">
+            <h5 class="mb-0 fw-bold text-warning"><i class="fas fa-history me-2"></i> Tranzaksiyalar Tarixi (Orders)</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-dark table-hover">
+                <thead class="small text-secondary text-uppercase">
+                    <tr>
+                        <th>Sana / Vaqt</th>
+                        <th>Kimdan</th>
+                        <th>Qayerga (Karta)</th>
+                        <th>Summa</th>
+                        <th>Turi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in transactions %}
+                    <tr>
+                        <td class="small">{{ t.date|date:"d.m.Y | H:i" }}</td>
+                        <td>{{ t.sender.username|default:"Tizim" }}</td>
+                        <td><code>{{ t.receiver_card }}</code></td>
+                        <td class="text-info fw-bold">{{ t.amount }} UZS</td>
+                        <td><span class="badge badge-type rounded-pill">{{ t.type }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center py-4 text-secondary">Hozircha hech qanday tranzaksiya mavjud emas.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-info shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Yangi Mijoz Yaratish</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <input type="hidden" name="action" value="create_user">
+                    <div class="mb-3">
+                        <label class="small text-secondary mb-1">Username</label>
+                        <input type="text" name="username" class="form-control" placeholder="Masalan: nodir_bank" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small text-secondary mb-1">Karta Raqami</label>
+                        <input type="text" name="card_number" class="form-control" placeholder="8600 ...." required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small text-secondary mb-1">Parol</label>
+                        <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-info w-100 py-2 fw-bold">MIJOZNI RO'YXATGA OLISH</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
