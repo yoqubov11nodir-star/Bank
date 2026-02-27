@@ -2,64 +2,108 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UzBank | Admin Login</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            background: #0f172a;
+            background: #0f172a; /* Asosiy qora fon */
             font-family: 'Poppins', sans-serif;
             height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
+            margin: 0;
         }
         .login-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #1e293b; /* Kartochka foni oqarib ketmasligi uchun qat'iy rang */
+            border: 1px solid rgba(56, 189, 248, 0.2);
             padding: 40px;
             border-radius: 20px;
             width: 100%;
             max-width: 400px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
         }
-        .brand { font-family: 'Orbitron', sans-serif; color: #38bdf8; text-align: center; margin-bottom: 30px; }
+        .brand { 
+            font-family: 'Orbitron', sans-serif; 
+            color: #38bdf8; 
+            text-align: center; 
+            margin-bottom: 30px; 
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+        }
         .form-control {
-            background: rgba(0,0,0,0.2);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: #0f172a !important; /* Input foni doim qora */
+            border: 1px solid #334155 !important;
             color: white !important;
             padding: 12px;
             margin-bottom: 20px;
+            transition: 0.3s;
+        }
+        /* Inputga bosilganda oqarib ketmasligi uchun */
+        .form-control:focus {
+            background: #0f172a !important;
+            border-color: #38bdf8 !important;
+            box-shadow: 0 0 0 0.25rem rgba(56, 189, 248, 0.25) !important;
+            outline: none;
+        }
+        /* Brauzer avtomatik to'ldirganda (autofill) oq bo'lib qolishini oldini olish */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus {
+            -webkit-text-fill-color: white !important;
+            -webkit-box-shadow: 0 0 0px 1000px #0f172a inset !important;
+            transition: background-color 5000s ease-in-out 0s;
         }
         .form-control::placeholder { color: rgba(255,255,255,0.4); }
+        
         .btn-admin {
             background: #38bdf8;
             border: none;
             width: 100%;
             padding: 12px;
             font-weight: bold;
+            color: #0f172a; /* Tugma ichidagi yozuv to'q rangda */
             text-transform: uppercase;
             letter-spacing: 1px;
             transition: 0.3s;
         }
-        .btn-admin:hover { background: #0ea5e9; transform: translateY(-2px); }
+        .btn-admin:hover { 
+            background: #0ea5e9; 
+            transform: translateY(-2px); 
+            color: #0f172a;
+        }
+        .btn-admin:active {
+            transform: translateY(0);
+            background: #0284c7 !important;
+        }
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #fca5a5;
+        }
     </style>
 </head>
 <body>
     <div class="login-card">
         <h2 class="brand">ADMIN ACCESS</h2>
+        
         {% if messages %}
             {% for msg in messages %}
                 <div class="alert alert-danger py-2 small">{{ msg }}</div>
             {% endfor %}
         {% endif %}
+        
         <form method="POST">
             {% csrf_token %}
-            <input type="text" name="name" class="form-control" placeholder="Admin foydalanuvchi nomi" required>
-            <input type="password" name="password" class="form-control" placeholder="Parol" required>
-            <button type="submit" class="btn btn-admin">Tizimga kirish</button>
+            <div class="mb-1">
+                <input type="text" name="name" class="form-control" placeholder="Admin foydalanuvchi nomi" required autocomplete="off">
+            </div>
+            <div class="mb-1">
+                <input type="password" name="password" class="form-control" placeholder="Parol" required>
+            </div>
+            <button type="submit" class="btn btn-admin mt-2">Tizimga kirish</button>
         </form>
     </div>
 </body>

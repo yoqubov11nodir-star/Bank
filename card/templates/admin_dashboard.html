@@ -9,26 +9,17 @@
     <style>
         :root { --sidebar-bg: #111827; --main-bg: #0f172a; --accent: #06b6d4; --card-bg: #1e293b; }
         body { background: var(--main-bg); color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        
         .sidebar { width: 260px; background: var(--sidebar-bg); height: 100vh; position: fixed; padding: 25px; border-right: 1px solid rgba(255,255,255,0.05); }
         .main-content { margin-left: 260px; padding: 40px; }
-        
         .stat-card { background: var(--card-bg); padding: 25px; border-radius: 15px; border-left: 5px solid var(--accent); position: relative; transition: 0.3s; }
         .stat-card:hover { transform: translateY(-5px); }
-
         .custom-table { background: var(--card-bg); border-radius: 15px; overflow: hidden; margin-top: 20px; border: 1px solid rgba(255,255,255,0.05); }
         .table { color: #cbd5e1; margin-bottom: 0; }
         .table thead { background: rgba(0,0,0,0.2); }
         .table td, .table th { padding: 15px; border-color: rgba(255,255,255,0.05); }
-
-        /* Modal xatoliklarini tuzatish (Oqarib qolmasligi uchun) */
         .modal-content { background: #1e293b; color: white; border: 1px solid var(--accent); }
-        .modal-header { border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .modal-footer { border-top: 1px solid rgba(255,255,255,0.1); }
-        .form-control { background: #0f172a !important; border: 1px solid #334155 !important; color: white !important; padding: 12px; }
-        .form-control:focus { box-shadow: 0 0 0 2px var(--accent); }
-
-        .btn-action { width: 35px; height: 35px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; border: none; transition: 0.2s; }
+        .form-control { background: #0f172a !important; border: 1px solid #334155 !important; color: white !important; }
+        .btn-action { width: 35px; height: 35px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; border: none; }
         .btn-edit { background: rgba(234, 179, 8, 0.1); color: #eab308; }
         .btn-delete { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
         .badge-type { background: var(--accent); color: #000; font-weight: 600; font-size: 11px; }
@@ -69,21 +60,18 @@
             <div class="stat-card">
                 <div class="text-secondary small fw-bold">JAMI MIJOZLAR</div>
                 <h2 class="mt-2 fw-bold">{{ user_count }} <span class="fs-6 fw-normal">ta</span></h2>
-                <i class="fas fa-users position-absolute end-0 bottom-0 m-3 opacity-25 fs-1"></i>
             </div>
         </div>
         <div class="col-md-4">
             <div class="stat-card" style="border-left-color: #22c55e;">
                 <div class="text-secondary small fw-bold">BANKDAGI JAMI PUL</div>
                 <h2 class="mt-2 fw-bold text-success">{{ total_money }} <small class="fs-6">UZS</small></h2>
-                <i class="fas fa-wallet position-absolute end-0 bottom-0 m-3 opacity-25 fs-1"></i>
             </div>
         </div>
         <div class="col-md-4">
             <div class="stat-card" style="border-left-color: #eab308;">
                 <div class="text-secondary small fw-bold">JAMI TRANZAKSIYALAR</div>
                 <h2 class="mt-2 fw-bold">{{ transactions.count }} <span class="fs-6 fw-normal">ta</span></h2>
-                <i class="fas fa-history position-absolute end-0 bottom-0 m-3 opacity-25 fs-1"></i>
             </div>
         </div>
     </div>
@@ -177,9 +165,20 @@
                     <tr>
                         <td class="small">{{ t.date|date:"d.m.Y | H:i" }}</td>
                         <td>{{ t.sender.username|default:"Tizim" }}</td>
-                        <td><code>{{ t.receiver_card }}</code></td>
+                        <td>
+                            {% if t.receiver_card %}
+                                <code class="text-info">{{ t.receiver_card }}</code>
+                            {% else %}
+                                <span class="text-secondary small"><i>Mavjud emas</i></span>
+                            {% endif %}
+                        </td>
                         <td class="text-info fw-bold">{{ t.amount }} UZS</td>
-                        <td><span class="badge badge-type rounded-pill">{{ t.type }}</span></td>
+                        <td>
+                            <span class="badge badge-type rounded-pill 
+                                {% if t.type == 'Transfer' %}bg-danger{% elif t.type == 'Deposit' %}bg-success{% else %}bg-info{% endif %}">
+                                {{ t.type }}
+                            </span>
+                        </td>
                     </tr>
                     {% empty %}
                     <tr><td colspan="5" class="text-center py-4 text-secondary">Hozircha hech qanday tranzaksiya mavjud emas.</td></tr>

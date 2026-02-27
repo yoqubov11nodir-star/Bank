@@ -60,7 +60,7 @@ def register_view(request):
             send_mail(
                 'UzBank Tasdiqlash Kodi', 
                 f'Sizning tasdiqlash kodingiz: {otp_code}', 
-                'yoqubov11nodir@gmail.com', # Yuboruvchi email
+                'yoqubov11nodir@gmail.com', 
                 [email],
                 fail_silently=False,
             )
@@ -69,7 +69,7 @@ def register_view(request):
             messages.error(request, f"Email yuborishda xato: {e}")
     return render(request, 'register.html')
 
-# EMAIL TASDIQLASH (TUZATILGAN)
+# EMAIL TASDIQLASH
 def verify_email(request):
     data = request.session.get('temp_reg_data')
     if not data: 
@@ -77,35 +77,26 @@ def verify_email(request):
     
     if request.method == "POST":
         if request.POST.get('otp') == data['otp']:
-            # Foydalanuvchi allaqachon yaratilmaganini tekshiramiz
             if not User.objects.filter(username=data['username']).exists():
                 user = User.objects.create_user(
                     username=data['username'], 
                     email=data['email'], 
                     password=data['password']
                 )
-                
-                # Card modelida PIN yo'qligi uchun uni olib tashladik
                 card = Card.objects.create(
                     user=user, 
                     card_number=data['card_number'], 
                     balance=Decimal('0.00')
                 )
-                
-                # Avtomatik login
                 auth_login(request, user)
                 request.session['card_id'] = card.id
-                
-                # Sessiyani xavfsiz o'chirish (KeyError oldini olish)
                 request.session.pop('temp_reg_data', None)
-                
                 messages.success(request, "Muvaffaqiyatli ro'yxatdan o'tdingiz!")
                 return redirect('user_dashboard')
             else:
                 return redirect('login')
         else:
             messages.error(request, "Kod noto'g'ri!")
-            
     return render(request, 'verify_email.html')
 
 # DASHBOARD (USER)
@@ -127,7 +118,13 @@ def dashboard(request):
             if amount:
                 my_card.balance += Decimal(amount) 
                 my_card.save()
-                Transaction.objects.create(sender=my_card.user, amount=Decimal(amount), type="Deposit")
+                # TUZATISH: receiver_card ga o'z kartasini yozamiz
+                Transaction.objects.create(
+                    sender=my_card.user, 
+                    receiver_card=my_card.card_number, 
+                    amount=Decimal(amount), 
+                    type="Deposit"
+                )
                 messages.success(request, f"{amount} UZS qo'shildi!")
             return redirect('user_dashboard')
             
@@ -218,6 +215,13 @@ def admin_dashboard(request):
                 new_balance = request.POST.get('balance', 0)
                 card.balance = Decimal(str(new_balance))
                 card.save()
+                # TUZATISH: Admin o'zgartirganda ham receiver_card yoziladi
+                Transaction.objects.create(
+                    sender=request.user, 
+                    receiver_card=card.card_number, 
+                    amount=Decimal(str(new_balance)), 
+                    type="Admin Update"
+                )
                 messages.success(request, "Balans o'zgardi!")
             except Exception as e:
                 messages.error(request, f"Xato: {e}")
