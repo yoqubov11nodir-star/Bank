@@ -118,7 +118,6 @@ def dashboard(request):
             if amount:
                 my_card.balance += Decimal(amount) 
                 my_card.save()
-                # TUZATISH: receiver_card ga o'z kartasini yozamiz
                 Transaction.objects.create(
                     sender=my_card.user, 
                     receiver_card=my_card.card_number, 
@@ -215,7 +214,6 @@ def admin_dashboard(request):
                 new_balance = request.POST.get('balance', 0)
                 card.balance = Decimal(str(new_balance))
                 card.save()
-                # TUZATISH: Admin o'zgartirganda ham receiver_card yoziladi
                 Transaction.objects.create(
                     sender=request.user, 
                     receiver_card=card.card_number, 
