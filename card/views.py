@@ -23,7 +23,6 @@ def login_view(request):
                 if user.is_staff:
                     return redirect('admin_dashboard')
                 else:
-                    # MANA SHU YERDA: 'dashboard' emas, 'user_dashboard' bo'lishi shart
                     return redirect('user_dashboard')
         
         messages.error(request, "Karta raqami yoki parol xato!")
@@ -85,7 +84,6 @@ def dashboard(request):
         if action == "deposit":
             amount = request.POST.get('amount')
             if amount:
-                # float(amount) EMAS, Decimal(amount) ishlatamiz
                 my_card.balance += Decimal(amount) 
                 my_card.save()
                 messages.success(request, f"{amount} UZS qo'shildi!")
@@ -97,7 +95,7 @@ def dashboard(request):
             amount_str = request.POST.get('amount')
             
             if target and amount_str:
-                amount = Decimal(amount_str) # Bu yerda ham Decimal
+                amount = Decimal(amount_str) 
                 to_card = Card.objects.filter(card_number=target).first()
                 
                 if not to_card:
@@ -105,8 +103,8 @@ def dashboard(request):
                 elif my_card.balance < amount:
                     messages.error(request, "Mablag' yetarli emas!")
                 else:
-                    my_card.balance -= amount # Decimal - Decimal endi ishlaydi
-                    to_card.balance += amount # Decimal + Decimal endi ishlaydi
+                    my_card.balance -= amount 
+                    to_card.balance += amount 
                     my_card.save()
                     to_card.save()
                     messages.success(request, "O'tkazma bajarildi!")
@@ -185,5 +183,4 @@ def admin_dashboard(request):
         'total_money': Card.objects.aggregate(Sum('balance'))['balance__sum'] or 0,
         'transactions': Transaction.objects.all().order_by('-date')
     }
-    # BU YERDA: Fayl nomi o'zgartirildi
     return render(request, 'admin_dashboard.html', context)
